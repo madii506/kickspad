@@ -101,7 +101,7 @@ img{max-width:100%;height:auto}
 
 /* ── hero ────────────────────────────────────────────── */
 .hero{min-height:min(calc(100vh - var(--toph)),900px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:36px 20px 40px;position:relative}
-.mark{width:clamp(150px,22vw,220px);position:relative;margin-bottom:0}
+.mark{width:clamp(170px,24vw,250px);position:relative;margin-bottom:22px;filter:drop-shadow(0 18px 40px rgba(83,252,24,.22))}
 .mark img{width:100%;display:block}
 .mark .refl{position:absolute;top:100%;left:0;width:100%;transform:scaleY(-1);opacity:.32;
   -webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,0) 45%,rgba(0,0,0,1) 100%);mask-image:linear-gradient(to bottom,rgba(0,0,0,0) 45%,rgba(0,0,0,1) 100%)}
@@ -113,7 +113,7 @@ img{max-width:100%;height:auto}
 .reflzone{height:clamp(70px,10vw,110px)}
 .word{font:400 clamp(72px,13vw,150px)/1 var(--disp);letter-spacing:.04em;color:var(--ink);margin:0}
 .word em{font-style:normal;color:var(--k)}
-.mech{font-size:clamp(17px,2.2vw,21px);line-height:1.4;max-width:34ch;margin:16px auto 10px;color:var(--ink)}
+.mech{font-size:clamp(17px,2.2vw,22px);line-height:1.4;max-width:34ch;margin:14px auto 0;color:var(--ink)}
 .venue{font:400 12.5px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin:0}
 @media (max-width:640px){.hero{min-height:0;padding:40px 20px 56px}}
 
@@ -235,7 +235,6 @@ td input:focus{border-bottom-color:var(--k)}
 <div class="scan" aria-hidden="true"></div>
 
 <div class="top" id="top">
-  <div class="strip" id="strip" role="status"></div>
   <div class="nav">
     <span class="cell"></span>
     <nav aria-label="Sections">
@@ -257,13 +256,9 @@ td input:focus{border-bottom-color:var(--k)}
 <header class="hero">
   <div class="mark">
     <img src="assets/mark.png" alt="KICKS mark: a K whose leg is a sneaker" width="1000" height="1000" fetchpriority="high">
-    <img class="refl" src="assets/mark.png" alt="" aria-hidden="true" width="1000" height="1000">
   </div>
-  <div class="horizon" aria-hidden="true"><i></i><i></i><i></i></div>
-  <div class="reflzone" aria-hidden="true"></div>
   <h1 class="word">KICK<em>S</em></h1>
   <p class="mech">Launch a coin on any Kick streamer. Fees send Kicks on stream.</p>
-  <p class="venue">pump.fun · Kick · nothing to claim</p>
 </header>
 
 <main>
@@ -508,9 +503,7 @@ td input:focus{border-bottom-color:var(--k)}
       <button class="cp" id="cpca" type="button">copy</button>
     </div>
     <div class="prose">
-      <p>The bar at the top of this page is the only place a mint address will ever be announced by this site. Until it changes, there is no token.</p>
     </div>
-    <p class="legal" id="legal">Not affiliated with Kick. Streamers are not endorsed by, and have not endorsed, any coin launched on them.</p>
   </div>
 </section>
 
@@ -534,14 +527,9 @@ async function copy(text, btn) {
 
 /* ── top bar: scam strip in both states ──────────────── */
 (function strip() {
-  const s = $('#strip');
   if (CONFIG.ca) {
-    s.innerHTML = '<b>OFFICIAL TOKEN $KICKS</b> <code>' + esc(CONFIG.ca) + '</code><button type="button" id="cpstrip">copy</button> — anything else is not ours';
-    $('#cpstrip').addEventListener('click', (e) => copy(CONFIG.ca, e.currentTarget));
     const row = $('#carow'); row.hidden = false; $('#ca-out').textContent = CONFIG.ca;
     $('#cpca').addEventListener('click', (e) => copy(CONFIG.ca, e.currentTarget));
-  } else {
-    s.innerHTML = '<b>$KICKS has no mint address yet.</b> When it exists it will be here and in the pinned post at the same moment. Anyone posting an address before that is scamming you.';
   }
   $('#go').href = CONFIG.launchpad;
   const top = $('#top');
