@@ -114,22 +114,17 @@ img{max-width:100%;height:auto}
 .word{font:400 clamp(72px,13vw,150px)/1 var(--disp);letter-spacing:.04em;color:var(--k);margin:0;animation:flick 6s steps(1,end) infinite;text-shadow:0 0 18px rgba(var(--k-rgb),.55),0 0 60px rgba(var(--k-rgb),.25)}
 @keyframes flick{0%,100%{opacity:1}3%{opacity:.35}4%{opacity:1}7%{opacity:.6}8%{opacity:1}41%{opacity:1}42%{opacity:.2}43%{opacity:1}44%{opacity:.7}45%{opacity:1}73%{opacity:1}74%{opacity:.45}75%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.word{animation:none}}
-/* hero send card: the whole idea, drawn */
-.send{margin:30px auto 0;width:min(560px,100%);text-align:left}
-.send .lab{font:11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);margin:0 0 10px;text-align:center}
-.sendcard{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;border:1px solid rgba(var(--k-rgb),.55);background:rgba(7,9,7,.72);padding:14px 16px;position:relative;overflow:hidden;min-height:76px}
-.sendcard:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--k)}
-.sendcard img{width:48px;height:48px;border-radius:50%;border:2px solid var(--k);display:block;object-fit:cover}
-.sendcard .who{font:15px/1.25 var(--body);color:var(--ink)}
-.sendcard .who b{font-weight:600;color:var(--k)}
-.sendcard .who small{display:block;font:11px/1.4 var(--mono);letter-spacing:.06em;color:rgba(255,255,255,.55);margin-top:4px;text-transform:uppercase}
-.sendcard .go{font:12px/1 var(--mono);color:var(--bg);background:var(--k);padding:10px 12px;border-radius:2px;white-space:nowrap;letter-spacing:.06em;align-self:center}
-.sendcard.sw{animation:sw .42s ease}
-@keyframes sw{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.senddots{display:flex;justify-content:center;gap:6px;margin-top:10px}
-.senddots i{width:6px;height:6px;border-radius:50%;background:rgba(var(--k-rgb),.25);display:block}
-.senddots i.on{background:var(--k)}
-@media (max-width:640px){.sendcard{grid-template-columns:auto 1fr;gap:12px}.sendcard .go{grid-column:1/-1;text-align:center}}
+/* background pops: small gift-alert windows for real Kick handles */
+.hero>*{position:relative;z-index:1}
+.pops{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.pop{position:absolute;display:flex;align-items:center;gap:9px;padding:8px 11px 8px 8px;border:1px solid rgba(var(--k-rgb),.5);background:rgba(7,9,7,.78);box-shadow:0 0 0 1px rgba(0,0,0,.6),0 10px 30px rgba(0,0,0,.5);opacity:0;transform:translateY(10px) scale(.96);animation:popin 4.2s ease forwards;will-change:opacity,transform}
+.pop:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--k)}
+.pop img{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--k);display:block;object-fit:cover}
+.pop span{font:11px/1.3 var(--mono);letter-spacing:.04em;color:var(--ink);white-space:nowrap}
+.pop span b{color:var(--k);font-weight:500}
+.pop span small{display:block;font-size:9.5px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+@keyframes popin{0%{opacity:0;transform:translateY(10px) scale(.96)}8%{opacity:1;transform:none}80%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-6px)}}
+@media (prefers-reduced-motion:reduce){.pops{display:none}}
 .word em{font-style:normal;color:var(--k)}
 .mech{font-size:clamp(17px,2.2vw,22px);line-height:1.4;max-width:34ch;margin:14px auto 0;color:var(--ink)}
 .venue{font:400 12.5px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin:0}
@@ -272,20 +267,12 @@ td input:focus{border-bottom-color:var(--k)}
 <span class="sr" id="live" aria-live="polite"></span>
 
 <header class="hero">
+  <div class="pops" id="pops" aria-hidden="true"></div>
   <div class="mark">
     <img src="assets/mark.png" alt="KICKS mark: a K whose leg is a sneaker" width="1000" height="1000" fetchpriority="high">
   </div>
   <h1 class="word">KICKS</h1>
   <p class="mech">Launch a coin on any Kick streamer. Fees send Kicks on stream.</p>
-  <div class="send" id="send" aria-live="polite">
-    <p class="lab">Fees go straight to the Kick handle</p>
-    <div class="sendcard" id="sendcard">
-      <img id="send-av" src="assets/av/xqc.jpg" alt="" width="48" height="48">
-      <div class="who"><span>Kicks from <b>$KICKS</b> → <b id="send-h">kick.com/xqc</b></span><small>gift alert · on their stream · nothing to claim</small></div>
-      <div class="go">SEND ON STREAM</div>
-    </div>
-    <div class="senddots" id="senddots" aria-hidden="true"></div>
-  </div>
 </header>
 
 <main>
@@ -566,21 +553,26 @@ async function copy(text, btn) {
   window.addEventListener('resize', fit);
 })();
 
-/* ── hero send card: rotates real Kick handles, no amounts ── */
-(function sendcard() {
+/* ── background pops: gift-alert windows for real Kick handles, no amounts ── */
+(function pops() {
+  const box = $('#pops'); if (!box) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const H = ['xqc','adinross','amouranth','trainwreckstv','sneako','iceposeidon'];
-  const av = $('#send-av'), h = $('#send-h'), card = $('#sendcard'), dots = $('#senddots');
-  if (!card) return;
-  dots.innerHTML = H.map((_, i) => '<i' + (i === 0 ? ' class="on"' : '') + '></i>').join('');
-  let i = 0, paused = false;
-  card.addEventListener('mouseenter', () => paused = true);
-  card.addEventListener('mouseleave', () => paused = false);
-  const show = () => {
-    card.classList.remove('sw'); void card.offsetWidth; card.classList.add('sw');
-    av.src = 'assets/av/' + H[i] + '.jpg'; h.textContent = 'kick.com/' + H[i];
-    $$('#senddots i').forEach((d, k) => d.classList.toggle('on', k === i));
+  let i = Math.floor(Math.random() * H.length), busy = 0;
+  const spawn = () => {
+    if (document.hidden || busy >= 3) return;
+    const w = box.clientWidth, h = box.clientHeight; if (w < 320) return;
+    const slug = H[i = (i + 1) % H.length];
+    const el = document.createElement('div'); el.className = 'pop';
+    el.innerHTML = '<img src="assets/av/' + slug + '.jpg" alt="" width="28" height="28"><span>Kicks from <b>$KICKS</b> → <b>kick.com/' + slug + '</b><small>gift alert · on stream</small></span>';
+    // keep pops in the side thirds so they never sit under the mark or wordmark
+    const left = Math.random() < .5;
+    const x = 4 + Math.random() * 18, y = 8 + Math.random() * 76;
+    el.style[left ? 'left' : 'right'] = x + '%'; el.style.top = y + '%';
+    box.appendChild(el); busy++;
+    el.addEventListener('animationend', () => { el.remove(); busy--; });
   };
-  setInterval(() => { if (paused || document.hidden) return; i = (i + 1) % H.length; show(); }, 4600);
+  spawn(); setInterval(spawn, 1700);
 })();
 
 /* ── nav scroll-spy: exactly one active item ─────────── */
