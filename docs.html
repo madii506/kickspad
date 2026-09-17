@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KICKS — docs</title>
+<meta name="description" content="How KICKS settles: one Kick channel per coin, 100% of the creator fee into a pot, Kicks sent on stream when the channel is live. The operator, the edge cases, the readers.">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="assets/icon-64.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
+<style>
+@font-face{font-family:Anton;src:url(assets/anton.woff2) format('woff2');font-display:swap}
+@font-face{font-family:Inter;src:url(assets/inter.woff2) format('woff2');font-weight:100 900;font-display:swap}
+@font-face{font-family:Plex;src:url(assets/plexmono.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:Plex;src:url(assets/plexmono-med.woff2) format('woff2');font-weight:500;font-display:swap}
+:root{--bg:#070907;--ink:#eef2ee;--dim:#a3aaa3;--mute:#6a716a;--line:rgba(255,255,255,.13);--line2:rgba(255,255,255,.07);
+  --k:#53FC18;--k-rgb:83,252,24;--mono:Plex,'IBM Plex Mono',ui-monospace,Menlo,monospace;--sans:Inter,system-ui,sans-serif;--disp:Anton,Impact,sans-serif;--toph:92px}
+*{box-sizing:border-box}
+html{background:var(--bg);overflow-x:hidden;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 var(--sans);overflow-x:clip;padding-top:var(--toph)}
+[hidden]{display:none!important}
+a{color:var(--ink);text-decoration-color:rgba(var(--k-rgb),.5);text-underline-offset:3px}
+a:hover{color:var(--k)}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
+h1{font-size:clamp(26px,3.4vw,38px);line-height:1.15;margin:14px 0 10px}
+h2{font-size:clamp(20px,2.6vw,26px);line-height:1.2;margin:0 0 16px}
+h3{font-size:16px;margin:26px 0 8px}
+p{margin:0 0 14px}
+code,kbd,pre{font-family:var(--mono);font-size:.93em}
+pre{border:1px solid var(--line);padding:14px 16px;overflow:auto;color:var(--k);margin:16px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input{font:inherit;color:var(--ink);background:transparent;border:0;outline:0;min-width:0}
+input::placeholder{color:var(--mute)}
+:focus-visible{outline:2px solid var(--k);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+.scan{position:fixed;inset:0;z-index:40;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.11) 0 1px,transparent 1px 3px)}
+.top{position:fixed;top:0;left:0;right:0;z-index:30;background:rgba(7,9,7,.94)}
+.strip{font:12px/1.45 var(--mono);padding:9px 16px;text-align:center;border-bottom:1px solid rgba(var(--k-rgb),.35);background:rgba(var(--k-rgb),.07)}
+.strip b{color:var(--k);font-weight:500}
+.strip code{color:var(--k);word-break:break-all}
+.strip button{font-family:var(--mono);font-size:11px;color:var(--bg);background:var(--k);padding:1px 8px;margin-left:8px;border-radius:2px}
+.nav{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;border-bottom:1px solid var(--line);padding:0 16px}
+.nav .cell{min-height:1px}
+.nav nav{display:flex;flex-wrap:wrap;justify-content:center;column-gap:22px;padding:0 8px}
+.nav a{font:500 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--dim);padding:15px 0 13px;border-bottom:2px solid transparent;white-space:nowrap}
+.nav a:hover{color:var(--ink)}
+.nav a.on{color:var(--k);border-bottom-color:var(--k)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:32px;padding-right:32px;min-width:0}
+.cols{display:grid;grid-template-columns:200px minmax(0,1fr) 220px;gap:48px;align-items:start;padding-top:48px;padding-bottom:96px}
+.side{position:sticky;top:calc(var(--toph) + 24px);font-family:var(--mono);font-size:12px;min-width:0}
+.side .ph{letter-spacing:.18em;text-transform:uppercase;color:var(--mute);font-size:10.5px;margin:18px 0 8px}
+.side .ph:first-child{margin-top:0}
+.side a{display:block;color:var(--dim);text-decoration:none;padding:5px 0 5px 12px;border-left:1px solid var(--line2);overflow-wrap:anywhere}
+.side a:hover{color:var(--ink)}
+.side a.on{color:var(--k);border-left-color:var(--k)}
+.art{min-width:0;max-width:72ch}
+.eyebrow{display:flex;align-items:baseline;gap:14px;margin:0;font:400 12px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.eyebrow b{font:400 34px/1 var(--disp);color:var(--k);letter-spacing:.02em}
+.eyebrow span::before{content:"— "}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;font:400 12px/1.5 var(--mono);color:var(--dim);margin:0 0 30px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.meta button{color:var(--dim);text-decoration:underline;text-decoration-color:rgba(var(--k-rgb),.5);text-underline-offset:3px}
+.meta button:hover{color:var(--k)}
+section.doc{padding:44px 0;border-top:1px solid var(--line);scroll-margin-top:calc(var(--toph) + 12px)}
+section.doc:first-of-type{border-top:0;padding-top:0}
+.note{border-left:2px solid var(--k);padding:10px 16px;margin:20px 0;font-size:14px;color:var(--ink)}
+.note b{font:500 11px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--k);display:block;margin-bottom:6px}
+table{width:100%;border-collapse:collapse;margin:20px 0 10px;font-size:14px}
+th{font:500 11px/1.3 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);text-align:left;padding:0 14px 10px 0;border-bottom:1px solid var(--line)}
+td{vertical-align:top;padding:12px 14px 12px 0;border-bottom:1px solid var(--line2);min-width:0}
+td:last-child,th:last-child{padding-right:0}
+td.c{font-family:var(--mono);font-size:12.5px;color:var(--dim)}
+td .r{font-family:var(--mono);font-size:12px;color:var(--ink);overflow-wrap:anywhere}
+td .r.empty{color:var(--mute)}
+td .r .ms{color:var(--k)}
+.try{font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);border:1px solid var(--line);padding:7px 10px;white-space:nowrap}
+.try:hover{border-color:var(--k);color:var(--k)}
+.try:disabled{color:var(--mute);cursor:wait}
+td input{width:100%;font-family:var(--mono);font-size:13px;border-bottom:1px solid var(--line);padding:4px 0}
+ol.order{padding-left:0;list-style:none;counter-reset:st;margin:20px 0}
+ol.order li{counter-increment:st;display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;padding:12px 0;border-bottom:1px solid var(--line2)}
+ol.order li::before{content:counter(st,decimal-leading-zero);font:400 26px/1 var(--disp);color:var(--k)}
+.legal{font-family:var(--mono);font-size:12.5px;color:var(--dim);border-top:1px solid var(--line);padding-top:26px;margin:44px 0 0}
+@media (max-width:1000px){.cols{grid-template-columns:minmax(0,1fr);gap:28px}.side{position:static}.side.r{display:none}.side .ph{margin-top:0}.side a{display:inline-block;margin:0 10px 6px 0;padding:4px 8px;border:1px solid var(--line2)}}
+@media (max-width:640px){
+  .wrap{padding-left:20px;padding-right:20px}
+  .nav nav{column-gap:16px}.nav a{font-size:11px;letter-spacing:.1em;padding:11px 0 9px}
+  table.stack thead{display:none}
+  table.stack tr{display:block;border-bottom:1px solid var(--line);padding:12px 0}
+  table.stack td{display:block;border:0;padding:3px 0}
+  table.stack td[data-l]::before{content:attr(data-l);display:block;font:500 10.5px/1.3 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin:8px 0 2px}
+}
+</style>
+</head>
+<body>
+<div class="scan" aria-hidden="true"></div>
+<div class="top" id="top">
+  <div class="strip" id="strip" role="status"></div>
+  <div class="nav">
+    <span class="cell"></span>
+    <nav aria-label="Pages">
+      <a href="index.html">Site</a>
+      <a href="#q0" class="on">Docs</a>
+      <a href="#readers">Readers</a>
+      <a href="#not">Status</a>
+    </nav>
+    <span class="cell"></span>
+  </div>
+</div>
+<span class="sr" id="live" aria-live="polite"></span>
+
+<div class="wrap cols">
+  <aside class="side l" aria-label="Phases">
+    <div class="ph">Before launch</div>
+    <a href="#q0">The question first</a>
+    <a href="#rule">The rule</a>
+    <a href="#pair">Pairing a coin</a>
+    <div class="ph">Settlement</div>
+    <a href="#order">Settlement order</a>
+    <a href="#edge">When it goes wrong</a>
+    <a href="#op">The operator</a>
+    <div class="ph">Reading</div>
+    <a href="#readers">Readers</a>
+    <a href="#not">Not verifiable today</a>
+  </aside>
+
+  <main class="art">
+    <p class="eyebrow"><b>00</b><span>Docs</span></p>
+    <h1>How KICKS settles, and where it can fail.</h1>
+    <div class="meta"><span>5 min read</span><span>everything here comes from the rule, not from a number</span><button type="button" id="cplink">Copy link ↗</button></div>
+
+    <section class="doc" id="q0">
+      <h2>Is this automated? No. A human presses send.</h2>
+      <p>Kick has no API for gifting. There is no endpoint a program can call to buy a pack and send it to a channel. Gifts are bought and sent by a person, in a Kick account, on a screen. So when a pot covers a pack and the channel is live, a human with a Kick account buys the pack and presses send.</p>
+      <p>That human decides nothing. Which channel is fixed by the coin's description. When is fixed by whether the channel is live. How much is fixed by the pot and Kick's pack sizes. Their role is the one step the rail does not expose to software. Here is what they can and cannot do.</p>
+      <table class="stack">
+        <thead><tr><th style="width:44%">It cannot</th><th>So it</th></tr></thead>
+        <tbody>
+          <tr><td data-l="It cannot">change which channel a coin pays</td><td data-l="So it">pays the channel in the coin's description, or nothing</td></tr>
+          <tr><td data-l="It cannot">change the fee</td><td data-l="So it">watches the pot grow at whatever rate was set on pump.fun</td></tr>
+          <tr><td data-l="It cannot">decide when</td><td data-l="So it">sends only while the channel is live and the pot covers a pack</td></tr>
+          <tr><td data-l="It cannot">make the alert say a different number</td><td data-l="So it">sends Kick's pack, and Kick's alert prints Kick's number</td></tr>
+          <tr><td data-l="It cannot">hide a send</td><td data-l="So it">leaves an alert on someone else's stream, at a timestamp in their VOD</td></tr>
+          <tr><td data-l="It cannot">be stopped from refusing</td><td data-l="So it">leaves a balance that never became an alert, visible to anyone</td></tr>
+          <tr><td data-l="It cannot">be stopped from sending unasked</td><td data-l="So it">leaves a sent total larger than the fee total, visible to anyone</td></tr>
+        </tbody>
+      </table>
+      <div class="note"><b>Note 1</b>Narrowing this role is the main engineering work ahead. It will not be described as gone before it is gone. If Kick ever exposes gifting to software, the role goes away, and this page will say so on the day it does.</div>
+    </section>
+
+    <section class="doc" id="rule">
+      <h2>The rule</h2>
+      <p>Launch a coin on any Kick streamer. Fees send Kicks on stream. The launch control is a Kick channel URL; that is the whole form. The coin's creator fee fills a pot for that channel, and whenever the channel is live and the pot covers a gift pack, Kicks are bought and sent on that stream. The gift alert fires on their screen, in front of their chat, with the coin's name on it.</p>
+      <pre>100% of the creator fee, into Kicks
+1 channel per coin
+0 things the streamer does</pre>
+      <p>pump.fun lets the creator set the creator fee at launch, capped at 3.00%. Whatever it is set to, KICKS routes 100% of it into the pot for that one channel. There is no split on our side, no treasury, no protocol take netted out before the pot sees it.</p>
+      <p>The send condition is two facts, and both are checkable by anyone watching: the channel is live, and the pot covers a pack. If either is false, nothing is sent.</p>
+    </section>
+
+    <section class="doc" id="pair">
+      <h2>Pairing a coin with a channel</h2>
+      <p>There is no form on this site and no registry. The coin's own description on pump.fun says which channel it pays. That line is the pairing key:</p>
+      <pre>Fees → kick.com/&lt;channel&gt; via KICKS</pre>
+      <p>One channel per coin was a decision, not a limitation. A coin that pays five streamers is a coin about nobody. A coin that pays one is about that one. If you want to pay a second streamer, launch a second coin.</p>
+      <div class="note"><b>Note 2</b>The streamer connects nothing, pastes nothing, signs nothing. There is no code for their bio, no login, no claim window. The Kicks land on their stream whether they have heard of the coin or not.</div>
+    </section>
+
+    <section class="doc" id="order">
+      <h2>Settlement order</h2>
+      <ol class="order">
+        <li><div>A coin is created on pump.fun with the description line naming one Kick channel. Its creator fee is set there, capped at 3.00%.</div></li>
+        <li><div>Every trade pays the creator fee. 100% of it is the pot for that channel. The pot climbs; it does not drip, because Kicks are sold in fixed packs.</div></li>
+        <li><div>Two facts are checked: the channel is live, and the pot covers a pack. Both are checkable by anyone watching.</div></li>
+        <li><div>When both are true, a human with a Kick account buys the largest pack the pot covers and presses send on that stream.</div></li>
+        <li><div>Kick fires the gift alert on the streamer's screen, in their layout, at a timestamp in their VOD. That alert is the receipt. No amount is ever drawn by this site.</div></li>
+        <li><div>The send is posted publicly with a clip or a screenshot of the alert as it fired, and the pot balance before and after.</div></li>
+      </ol>
+      <p>The rungs of the ladder are Kick's prices, not ours. They will be published from Kick's own prices at the moment the first pack is bought, and not before. Kick's share of every gift will be published once confirmed from Kick's own terms, with a link to the terms.</p>
+    </section>
+
+    <section class="doc" id="edge">
+      <h2>When it goes wrong</h2>
+      <p>Every one of these has an answer decided in advance, rather than after somebody notices.</p>
+      <table class="stack">
+        <thead><tr><th style="width:28%">Case</th><th>What happens</th><th style="width:32%">Where you see it</th></tr></thead>
+        <tbody>
+          <tr><td data-l="Case">The channel never goes live</td><td data-l="What happens">Its Kicks are never bought. The pot stays where it is. It is never re-routed to another channel, never swept into anything, never quietly zeroed.</td><td data-l="Where you see it" class="c">The pot, visible on the site, with its balance showing.</td></tr>
+          <tr><td data-l="Case">The pot is smaller than the smallest pack</td><td data-l="What happens">It waits. There is no partial send, because Kick does not sell partial packs. The pot climbs until it covers a rung.</td><td data-l="Where you see it" class="c">The pot balance, and the first rung once Kick's prices are published.</td></tr>
+          <tr><td data-l="Case">The streamer turns gifts off, or bans the sending account</td><td data-l="What happens">Published. The pot is frozen, still visible, and the site says why it has not become an alert.</td><td data-l="Where you see it" class="c">A line under that channel's pot naming the reason.</td></tr>
+          <tr><td data-l="Case">The human refuses to send</td><td data-l="What happens">The channel was live, the pack was covered, and no alert fired. The gap does not close by itself.</td><td data-l="Where you see it" class="c">A balance that never became an alert, publicly.</td></tr>
+          <tr><td data-l="Case">The human sends without being told</td><td data-l="What happens">The arithmetic stops adding up. The discrepancy is the signal.</td><td data-l="Where you see it" class="c">The sent total exceeds the fee total, publicly.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="doc" id="op">
+      <h2>The operator, plainly</h2>
+      <p>A role that cannot decide can still refuse. The operator can refuse to send: then the pot shows a balance, the channel was live, the pack was covered, and no alert fired. The operator can send without being told: then the total of Kicks sent exceeds the total of fees collected, and the arithmetic on the site stops adding up.</p>
+      <p>The operator cannot change which channel a coin pays, cannot change the fee, cannot make the alert say a different number, and cannot hide a send, because every send is an alert on someone else's stream.</p>
+      <div class="note"><b>Note 3</b>If the trigger lived on this site the whole mechanism would be theatre. It lives on the streamer's own stream, where it cannot be forged from here.</div>
+    </section>
+
+    <section class="doc" id="readers">
+      <h2>Readers</h2>
+      <p>These are the endpoints the site calls. Each button hits the real one and prints what came back and how long it took. A reader that cannot reach its source says so; it never prints a zero in place of an answer.</p>
+      <table class="stack" id="readers-t">
+        <thead><tr><th style="width:32%">Endpoint</th><th style="width:26%">Reads</th><th>Result</th><th></th></tr></thead>
+        <tbody>
+          <tr data-url="/api/kick?c=xqc"><td data-l="Endpoint" class="c">/api/kick?c=xqc</td><td data-l="Reads">A Kick channel: name, followers, live or not. Server-side, v2 then v1. A refusal is returned as a refusal.</td><td data-l="Result"><div class="r empty">—</div></td><td><button class="try" type="button">try</button></td></tr>
+          <tr data-url="/api/handle?h=Cented7"><td data-l="Endpoint" class="c">/api/handle?h=Cented7</td><td data-l="Reads">An X profile: name, followers, avatar. FxTwitter, then syndication.</td><td data-l="Result"><div class="r empty">—</div></td><td><button class="try" type="button">try</button></td></tr>
+          <tr data-url="/api/tweet?id=" data-input="tid"><td data-l="Endpoint" class="c">/api/tweet?id=<input id="tid" type="text" autocomplete="off" spellcheck="false" placeholder="a post id or URL" aria-label="X post id or URL"></td><td data-l="Reads">A post: views, likes, author.</td><td data-l="Result"><div class="r empty">—</div></td><td><button class="try" type="button">try</button></td></tr>
+          <tr data-url="/api/coin?ca=" data-input="ca"><td data-l="Endpoint" class="c">/api/coin?ca=<input id="ca" type="text" autocomplete="off" spellcheck="false" placeholder="a Solana mint" aria-label="Solana mint address"></td><td data-l="Reads">A Solana mint's pair on Dexscreener: price, volume, liquidity. Nothing to read for $KICKS until a mint exists.</td><td data-l="Result"><div class="r empty">—</div></td><td><button class="try" type="button">try</button></td></tr>
+          <tr data-url="/api/avatar?h=Cented7"><td data-l="Endpoint" class="c">/api/avatar?h=Cented7</td><td data-l="Reads">An X avatar, proxied as bytes from this origin.</td><td data-l="Result"><div class="r empty">—</div></td><td><button class="try" type="button">try</button></td></tr>
+        </tbody>
+      </table>
+      <h3>Wire format — /api/kick</h3>
+      <pre>{ ok, slug, name, followers, avatar, live, title, src, ms }
+{ ok:false, slug, reason:"kick refused the server read", status }
+{ ok:false, slug, reason:"no such channel", status:404 }</pre>
+    </section>
+
+    <section class="doc" id="not">
+      <h2>What is not verifiable today</h2>
+      <table class="stack">
+        <thead><tr><th style="width:22%">Thing</th><th>State</th></tr></thead>
+        <tbody>
+          <tr><td data-l="Thing" class="c">mint</td><td data-l="State">There is no mint address. When one exists it will appear on the site and in the pinned post at the same moment. Anyone posting one before that is scamming you.</td></tr>
+          <tr><td data-l="Thing" class="c">pot</td><td data-l="State">No pot has ever bought a Kick. Where a number would go there is a dash, and a dash is not a zero.</td></tr>
+          <tr><td data-l="Thing" class="c">ledger</td><td data-l="State">There is no ledger of sends, so there is no ledger on the site.</td></tr>
+          <tr><td data-l="Thing" class="c">ladder</td><td data-l="State">The rung sizes are not published. They will be taken from Kick's own prices at the moment the first pack is bought.</td></tr>
+          <tr><td data-l="Thing" class="c">share</td><td data-l="State">Kick's share of every gift is not published. It will appear when confirmed from Kick's own terms, with a link.</td></tr>
+          <tr><td data-l="Thing" class="c">consent</td><td data-l="State">No streamer has consented to any of this. Coins are launched on channels, not with them.</td></tr>
+        </tbody>
+      </table>
+      <p>What is checkable right now is the rule, written down, and this page.</p>
+      <p class="legal">Not affiliated with Kick. Streamers are not endorsed by, and have not endorsed, any coin launched on them.</p>
+    </section>
+  </main>
+
+  <aside class="side r" aria-label="On this page">
+    <div class="ph">On this page</div>
+    <a href="#q0">Is this automated?</a>
+    <a href="#rule">The rule</a>
+    <a href="#pair">Pairing</a>
+    <a href="#order">Settlement order</a>
+    <a href="#edge">When it goes wrong</a>
+    <a href="#op">The operator</a>
+    <a href="#readers">Readers</a>
+    <a href="#not">Not verifiable today</a>
+    <div class="ph">Quick links</div>
+    <a href="index.html#s2">Launch a coin</a>
+    <a href="index.html#s3">The pot model</a>
+    <a href="https://pump.fun/create" target="_blank" rel="noopener noreferrer">pump.fun/create ↗</a>
+  </aside>
+</div>
+
+<script>
+const CONFIG = { ca: '', x: '', launchpad: 'https://pump.fun/create' };
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const nf = new Intl.NumberFormat('en-US');
+const money = (n) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+async function copy(text, btn, back) {
+  const was = btn.textContent;
+  try { await navigator.clipboard.writeText(text); btn.textContent = 'copied'; } catch { btn.textContent = 'select + copy'; }
+  setTimeout(() => { btn.textContent = back || was; }, 1600);
+}
+(function strip() {
+  const s = $('#strip');
+  if (CONFIG.ca) {
+    s.innerHTML = '<b>OFFICIAL TOKEN $KICKS</b> <code>' + esc(CONFIG.ca) + '</code><button type="button" id="cpstrip">copy</button> — anything else is not ours';
+    $('#cpstrip').addEventListener('click', (e) => copy(CONFIG.ca, e.currentTarget));
+  } else {
+    s.innerHTML = '<b>$KICKS has no mint address yet.</b> When it exists it will be here and in the pinned post at the same moment. Anyone posting an address before that is scamming you.';
+  }
+  const top = $('#top');
+  const fit = () => document.documentElement.style.setProperty('--toph', top.offsetHeight + 'px');
+  fit(); if ('ResizeObserver' in window) new ResizeObserver(fit).observe(top); addEventListener('resize', fit);
+})();
+$('#cplink').addEventListener('click', (e) => copy(location.href.split('#')[0], e.currentTarget, 'Copy link ↗'));
+(function spy() {
+  const links = $$('.side a').filter((a) => a.getAttribute('href').startsWith('#'));
+  const secs = $$('section.doc');
+  const pick = () => {
+    const line = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--toph')) || 90) + 60;
+    let cur = secs[0];
+    for (const s of secs) if (s.getBoundingClientRect().top <= line) cur = s;
+    if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) cur = secs[secs.length - 1];
+    links.forEach((a) => a.classList.toggle('on', a.getAttribute('href') === '#' + cur.id));
+  };
+  ['scroll', 'resize', 'hashchange', 'load'].forEach((e) => addEventListener(e, pick, { passive: true })); pick();
+})();
+function summary(url, j, status, ct) {
+  if (url.startsWith('/api/avatar')) return status < 300 && ct.startsWith('image/') ? 'image · ' + ct : 'HTTP ' + status + ' · no image';
+  if (!j || typeof j !== 'object') return 'HTTP ' + status + ' · no JSON';
+  if (j.error) return 'HTTP ' + status + ' · ' + j.error;
+  if (url.startsWith('/api/kick')) return j.ok ? (j.name + ' · ' + (typeof j.followers === 'number' ? nf.format(j.followers) + ' followers' : 'followers —') + ' · ' + (j.live ? 'LIVE' : 'offline') + ' · ' + j.src) : (j.reason + (j.status ? ' (HTTP ' + j.status + ')' : ''));
+  if (url.startsWith('/api/handle')) return j.exists ? ('@' + j.handle + (j.name ? ' · ' + j.name : '') + (typeof j.followers === 'number' ? ' · ' + nf.format(j.followers) + ' followers' : ' · followers —') + ' · ' + j.src) : 'not found · ' + j.src;
+  if (url.startsWith('/api/tweet')) return j.exists ? ('@' + j.handle + ' · views ' + (typeof j.views === 'number' ? nf.format(j.views) : '—') + ' · ' + j.src) : 'not found · ' + j.src;
+  if (url.startsWith('/api/coin')) return j.hasPair ? ((j.symbol || j.ca) + ' · price ' + (j.price != null ? '$' + j.price : '—') + ' · vol24 ' + (j.volume24 != null ? money(j.volume24) : '—')) : 'no pair on Dexscreener for that mint';
+  return JSON.stringify(j).slice(0, 120);
+}
+async function hit(url) {
+  const t0 = performance.now();
+  try {
+    const r = await fetch(url, { cache: 'no-store' });
+    const ms = Math.round(performance.now() - t0);
+    const ct = r.headers.get('content-type') || '';
+    let j = null; if (ct.includes('json')) { try { j = await r.json(); } catch {} }
+    return { ok: true, status: r.status, ms, j, ct };
+  } catch { return { ok: false, status: 0, ms: Math.round(performance.now() - t0), j: null, ct: '' }; }
+}
+$$('#readers-t tr[data-url]').forEach((tr) => {
+  const btn = $('.try', tr), res = $('.r', tr);
+  btn.addEventListener('click', async () => {
+    let url = tr.dataset.url;
+    if (tr.dataset.input) { const v = $('#' + tr.dataset.input).value.trim(); if (!v) { res.className = 'r'; res.textContent = tr.dataset.input === 'tid' ? 'enter a post id first' : 'enter a mint first'; return; } url += encodeURIComponent(v); }
+    btn.disabled = true; res.className = 'r'; res.textContent = 'GET ' + url + ' …';
+    const x = await hit(url);
+    res.innerHTML = x.ok ? '→ ' + esc(summary(url, x.j, x.status, x.ct)) + ' · <span class="ms">' + x.ms + ' ms</span>' : 'reader unreachable · ' + x.ms + ' ms';
+    btn.disabled = false;
+  });
+});
+</script>
+</body>
+</html>

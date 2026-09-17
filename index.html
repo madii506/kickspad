@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KICKS</title>
+<meta name="description" content="Launch a coin on any Kick streamer. Fees send Kicks on stream. The gift alert on their own stream is the receipt. Nothing to connect, nothing to claim.">
+<meta property="og:title" content="KICKS">
+<meta property="og:description" content="Launch a coin on any Kick streamer. Fees send Kicks on stream.">
+<meta property="og:image" content="assets/logo.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="assets/icon-64.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
+<link rel="preload" as="font" type="font/woff2" href="assets/anton.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="assets/inter.woff2" crossorigin>
+<style>
+@font-face{font-family:Anton;src:url(assets/anton.woff2) format('woff2');font-display:swap}
+@font-face{font-family:Inter;src:url(assets/inter.woff2) format('woff2');font-weight:100 900;font-display:swap}
+@font-face{font-family:Plex;src:url(assets/plexmono.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:Plex;src:url(assets/plexmono-med.woff2) format('woff2');font-weight:500;font-display:swap}
+
+:root{
+  --bg:#070907; --ink:#eef2ee; --dim:#a3aaa3; --mute:#6a716a;
+  --line:rgba(255,255,255,.13); --line2:rgba(255,255,255,.07);
+  --k:#53FC18; --k-rgb:83,252,24;
+  --mono:Plex,'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  --sans:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:Anton,Impact,'Arial Narrow',sans-serif;
+  --toph:92px;
+}
+*{box-sizing:border-box}
+html{background:var(--bg);overflow-x:hidden;-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:transparent;color:var(--ink);font:15px/1.6 var(--sans);overflow-x:clip;min-width:0;padding-top:var(--toph)}
+[hidden]{display:none!important}
+a{color:var(--ink);text-decoration-color:rgba(var(--k-rgb),.5);text-underline-offset:3px}
+a:hover{color:var(--k)}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.01em}
+h2{font-size:clamp(22px,3.2vw,34px);line-height:1.15;max-width:22ch;margin:18px 0 22px}
+h3{font-size:16px;margin:30px 0 8px}
+p{margin:0 0 14px}
+b,strong{font-weight:600}
+code,kbd{font-family:var(--mono);font-size:.93em}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input{font:inherit;color:var(--ink);background:transparent;border:0;outline:0;min-width:0}
+input::placeholder{color:var(--mute)}
+:focus-visible{outline:2px solid var(--k);outline-offset:2px}
+img{max-width:100%;height:auto}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+
+/* ── stage ───────────────────────────────────────────── */
+#stage{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+.scan{position:fixed;inset:0;z-index:40;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.11) 0 1px,transparent 1px 3px)}
+
+/* ── top: scam strip above a centred nav ────────────── */
+.top{position:fixed;top:0;left:0;right:0;z-index:30;background:rgba(7,9,7,.94)}
+.strip{font:12px/1.45 var(--mono);color:var(--ink);padding:9px 16px;text-align:center;
+  border-bottom:1px solid rgba(var(--k-rgb),.35);background:rgba(var(--k-rgb),.07)}
+.strip b{color:var(--k);font-weight:500}
+.strip code{color:var(--k);word-break:break-all}
+.strip button{font-family:var(--mono);font-size:11px;color:var(--bg);background:var(--k);padding:1px 8px;margin-left:8px;border-radius:2px}
+.nav{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;border-bottom:1px solid var(--line);padding:0 16px}
+.nav .cell{min-height:1px}
+.nav nav{display:flex;flex-wrap:wrap;justify-content:center;column-gap:22px;row-gap:0;padding:0 8px}
+.nav a{font:500 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;text-decoration:none;
+  color:var(--dim);padding:15px 0 13px;border-bottom:2px solid transparent;white-space:nowrap}
+.nav a:hover{color:var(--ink)}
+.nav a.on{color:var(--k);border-bottom-color:var(--k)}
+@media (max-width:640px){
+  .nav nav{column-gap:16px}
+  .nav a{font-size:11px;letter-spacing:.1em;padding:11px 0 9px}
+}
+
+/* ── layout ──────────────────────────────────────────── */
+.wrap{max-width:980px;margin:0 auto;padding-left:32px;padding-right:32px;min-width:0}
+@media (max-width:640px){.wrap{padding-left:20px;padding-right:20px}}
+.prose{max-width:68ch}
+.prose p{color:var(--ink)}
+.prose .q{color:var(--dim)}
+.sec{padding-top:88px;padding-bottom:88px;border-top:1px solid var(--line);scroll-margin-top:calc(var(--toph) + 8px)}
+.sec.tint{background:rgba(255,255,255,.022)}
+@media (max-width:640px){.sec{padding-top:64px;padding-bottom:64px}}
+.duo{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:40px;align-items:start}
+.spec{border-left:1px solid var(--line);padding-left:20px;margin-top:6px;font:400 12.5px/1.75 var(--mono);color:var(--dim);white-space:pre-wrap;overflow-wrap:anywhere}
+.spec b{color:var(--k);font-weight:500}
+.spec .lbl{white-space:normal}
+@media (max-width:900px){.duo{grid-template-columns:minmax(0,1fr);gap:24px}.spec{margin-top:0}}
+.eyebrow{display:flex;align-items:baseline;gap:16px;margin:0;font:400 12px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.eyebrow b{font:400 46px/1 var(--disp);letter-spacing:.02em;color:var(--k)}
+.eyebrow span::before{content:"— "}
+.mono{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;color:var(--dim)}
+.k{color:var(--k)}
+.status{font:500 11px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-left:14px;vertical-align:middle}
+.status.k{color:var(--k)}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
+.rv.vis{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
+
+/* ── hero ────────────────────────────────────────────── */
+.hero{min-height:min(calc(100vh - var(--toph)),900px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:36px 20px 40px;position:relative}
+.mark{width:clamp(150px,22vw,220px);position:relative;margin-bottom:0}
+.mark img{width:100%;display:block}
+.mark .refl{position:absolute;top:100%;left:0;width:100%;transform:scaleY(-1);opacity:.32;
+  -webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,0) 45%,rgba(0,0,0,1) 100%);mask-image:linear-gradient(to bottom,rgba(0,0,0,0) 45%,rgba(0,0,0,1) 100%)}
+.horizon{width:100vw;margin-left:calc(50% - 50vw);height:6px;position:relative;margin-top:-3px;pointer-events:none}
+.horizon i{position:absolute;left:0;right:0;display:block}
+.horizon i:nth-child(1){top:2px;height:2px;background:var(--k)}
+.horizon i:nth-child(2){top:0;height:2px;background:rgba(var(--k-rgb),.28)}
+.horizon i:nth-child(3){top:4px;height:2px;background:rgba(var(--k-rgb),.28)}
+.reflzone{height:clamp(70px,10vw,110px)}
+.word{font:400 clamp(72px,13vw,150px)/1 var(--disp);letter-spacing:.04em;color:var(--ink);margin:0}
+.word em{font-style:normal;color:var(--k)}
+.mech{font-size:clamp(17px,2.2vw,21px);line-height:1.4;max-width:34ch;margin:16px auto 10px;color:var(--ink)}
+.venue{font:400 12.5px/1 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin:0}
+@media (max-width:640px){.hero{min-height:0;padding:40px 20px 56px}}
+
+/* ── rule three-liner ────────────────────────────────── */
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:34px 0 30px}
+.three div{padding:22px 18px 22px 0;border-right:1px solid var(--line2)}
+.three div:last-child{border-right:0}
+.three b{display:block;font:400 clamp(40px,6vw,64px)/1 var(--disp);color:var(--k);letter-spacing:.02em;margin-bottom:8px}
+.three span{font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;color:var(--dim);text-transform:uppercase}
+@media (max-width:640px){.three{grid-template-columns:minmax(0,1fr)}.three div{border-right:0;border-bottom:1px solid var(--line2);padding:16px 0}.three div:last-child{border-bottom:0}}
+
+/* ── controls ────────────────────────────────────────── */
+.blk{border:1px solid var(--line);padding:14px 16px;min-width:0;background:rgba(7,9,7,.55)}
+.lbl{font:500 11px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin:0 0 10px}
+.eq{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1.35fr) auto minmax(0,1fr);gap:12px;align-items:stretch;margin:28px 0 18px}
+.eq .op{display:flex;align-items:center;justify-content:center;font:400 34px/1 var(--disp);color:var(--k);padding:0 2px}
+.eq .blk p{margin:0;color:var(--dim);font-size:13.5px}
+.eq .blk p.lbl{margin-bottom:10px}
+.eq input{width:100%;font-family:var(--mono);font-size:15px;padding:8px 0;border-bottom:1px solid var(--line);color:var(--ink)}
+.eq input:focus{border-bottom-color:var(--k)}
+.go{display:flex;align-items:center;justify-content:center;text-align:center;background:var(--k);color:var(--bg);text-decoration:none;font-weight:700;font-size:15px;padding:16px 18px;min-height:96px}
+.go:hover{color:var(--bg);background:#fff}
+@media (max-width:760px){.eq{grid-template-columns:minmax(0,1fr)}.eq .op{padding:0;font-size:28px}.go{min-height:0}}
+
+.card{display:flex;align-items:center;gap:16px;border:1px solid var(--line);padding:14px 16px;margin:0 0 18px;min-width:0}
+.card .av{width:56px;height:56px;border-radius:50%;flex:0 0 56px;background:rgba(var(--k-rgb),.14);display:flex;align-items:center;justify-content:center;font:400 28px/1 var(--disp);color:var(--k);overflow:hidden}
+.card .av img{width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .3s}
+.card .av img.ok{opacity:1}
+.card .who{min-width:0;flex:1}
+.card .nm{font-weight:600;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .sl{font-family:var(--mono);font-size:12.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .sl a{color:var(--dim)}
+.card .fw{font-family:var(--mono);font-size:12.5px;color:var(--ink);margin-top:4px}
+.chip{font:500 11px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;padding:6px 9px;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.chip.live{color:var(--bg);background:var(--k);border-color:var(--k)}
+.chip.live::before{content:"● "}
+.card.fail{border-color:rgba(255,255,255,.2)}
+.card.fail .who{font-family:var(--mono);font-size:13px;color:var(--ink)}
+.card.fail .who small{display:block;color:var(--dim);margin-top:4px;font-size:12px}
+.card.wait .who{font-family:var(--mono);font-size:13px;color:var(--dim)}
+
+.split{margin:22px 0 8px}
+.split .bar{height:18px;background:var(--k);position:relative;margin:8px 0 6px}
+.split .bar i{position:absolute;inset:0;display:flex;align-items:center;padding:0 10px;font:500 11px/1 var(--mono);letter-spacing:.1em;color:var(--bg);font-style:normal;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.split .legend{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 14px;font-family:var(--mono);font-size:12px;color:var(--dim)}
+@media (max-width:640px){.split .legend span:nth-child(2){order:3;flex:1 1 100%}}
+
+.desc{margin-top:24px}
+.desc .line{display:flex;align-items:center;gap:12px;border:1px solid var(--line);padding:12px 14px;min-width:0}
+.desc code{flex:1;min-width:0;font-size:14px;color:var(--k);overflow-wrap:anywhere}
+.desc code.empty{color:var(--mute)}
+.cp{font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);border:1px solid var(--line);padding:8px 10px;white-space:nowrap}
+.cp:hover{border-color:var(--k);color:var(--k)}
+.cp:disabled{color:var(--mute);cursor:not-allowed}
+
+/* ── calculator ──────────────────────────────────────── */
+.calc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:26px 0 12px}
+.calc .blk input{width:100%;font-family:var(--mono);font-size:22px;padding:6px 0;border-bottom:1px solid var(--line)}
+.calc .blk input:focus{border-bottom-color:var(--k)}
+.calc .unit{font-family:var(--mono);font-size:12px;color:var(--dim);margin-top:6px}
+.calc .ro{font:500 clamp(20px,3vw,28px)/1.2 var(--mono);color:var(--k);padding:8px 0 2px;overflow-wrap:anywhere}
+.calc .ro.empty{color:var(--mute)}
+.err{font-family:var(--mono);font-size:12.5px;color:var(--ink);border-left:2px solid var(--k);padding:6px 10px;margin:4px 0 14px}
+.packs{font-family:var(--mono);font-size:12.5px;color:var(--dim);border-top:1px solid var(--line2);padding-top:14px;margin-top:10px}
+@media (max-width:640px){.calc{grid-template-columns:minmax(0,1fr)}}
+
+/* ── alert ───────────────────────────────────────────── */
+.alertwrap{margin:26px 0 30px}
+.al{display:inline-flex;align-items:center;gap:14px;border:1px solid var(--k);padding:14px 22px 14px 14px;max-width:100%;min-width:0;background:rgba(7,9,7,.8)}
+.al .av{width:44px;height:44px;border-radius:50%;flex:0 0 44px;background:rgba(var(--k-rgb),.14);display:flex;align-items:center;justify-content:center;font:400 22px/1 var(--disp);color:var(--k);overflow:hidden}
+.al .av img{width:100%;height:100%;object-fit:cover;display:block}
+.al .t{min-width:0}
+.al .t b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.al .t span{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--k)}
+.al-none{font-family:var(--mono);font-size:13px;color:var(--dim);border:1px dashed var(--line);padding:16px;display:inline-block}
+
+/* ── tables ──────────────────────────────────────────── */
+table{width:100%;border-collapse:collapse;margin:26px 0 10px;font-size:14px}
+th{font:500 11px/1.3 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);text-align:left;padding:0 14px 10px 0;border-bottom:1px solid var(--line)}
+td{vertical-align:top;padding:13px 14px 13px 0;border-bottom:1px solid var(--line2);min-width:0}
+td:last-child,th:last-child{padding-right:0}
+td.c{font-family:var(--mono);font-size:12.5px;color:var(--dim)}
+td .r{font-family:var(--mono);font-size:12px;color:var(--ink);overflow-wrap:anywhere}
+td .r.empty{color:var(--mute)}
+td .r .ms{color:var(--k)}
+td .r .no{color:var(--dim)}
+.try{font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);border:1px solid var(--line);padding:7px 10px;white-space:nowrap}
+.try:hover{border-color:var(--k);color:var(--k)}
+.try:disabled{color:var(--mute);cursor:wait}
+td input{width:100%;font-family:var(--mono);font-size:13px;border-bottom:1px solid var(--line);padding:4px 0;color:var(--ink)}
+td input:focus{border-bottom-color:var(--k)}
+@media (max-width:640px){
+  table.stack thead{display:none}
+  table.stack tr{display:block;border-bottom:1px solid var(--line);padding:12px 0}
+  table.stack td{display:block;border:0;padding:3px 0}
+  table.stack td[data-l]::before{content:attr(data-l);display:block;font:500 10.5px/1.3 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin:8px 0 2px}
+}
+.probes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--line);margin:26px 0 8px}
+.probe{padding:12px 12px;border-right:1px solid var(--line2);min-width:0}
+.probe:last-child{border-right:0}
+.probe .n{font:500 11px/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.probe .v{font:500 15px/1.3 var(--mono);color:var(--k);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.probe .v.wait{color:var(--mute)}
+.probe .v.bad{color:var(--dim)}
+@media (max-width:760px){.probes{grid-template-columns:repeat(2,minmax(0,1fr))}.probe{border-bottom:1px solid var(--line2)}.probe:nth-child(2n){border-right:0}}
+
+/* ── status ──────────────────────────────────────────── */
+.nots{list-style:none;padding:0;margin:26px 0 8px;border-top:1px solid var(--line)}
+.nots li{display:grid;grid-template-columns:minmax(0,7ch) minmax(0,1fr);gap:16px;padding:14px 0;border-bottom:1px solid var(--line2)}
+.nots li b{font:500 12px/1.6 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--k)}
+.nots li i{font-style:normal;color:var(--dim);display:block;font-size:13.5px}
+.carow{display:flex;align-items:center;gap:12px;border:1px solid var(--k);padding:12px 14px;margin:22px 0;min-width:0}
+.carow code{flex:1;min-width:0;color:var(--k);overflow-wrap:anywhere}
+.legal{font-family:var(--mono);font-size:12.5px;color:var(--dim);border-top:1px solid var(--line);padding-top:26px;margin:44px 0 0;max-width:68ch}
+</style>
+</head>
+<body>
+<canvas id="stage" aria-hidden="true"></canvas>
+<div class="scan" aria-hidden="true"></div>
+
+<div class="top" id="top">
+  <div class="strip" id="strip" role="status"></div>
+  <div class="nav">
+    <span class="cell"></span>
+    <nav aria-label="Sections">
+      <a href="#s1">Rule</a>
+      <a href="#s2">Launch</a>
+      <a href="#s3">Pot</a>
+      <a href="#s4">Receipt</a>
+      <a href="#s5">Failures</a>
+      <a href="#s6">Operator</a>
+      <a href="#s7">Readers</a>
+      <a href="#s8">Status</a>
+      <a href="docs.html">Docs ↗</a>
+    </nav>
+    <span class="cell"></span>
+  </div>
+</div>
+<span class="sr" id="live" aria-live="polite"></span>
+
+<header class="hero">
+  <div class="mark">
+    <img src="assets/mark.png" alt="KICKS mark: a K whose leg is a sneaker" width="1000" height="1000" fetchpriority="high">
+    <img class="refl" src="assets/mark.png" alt="" aria-hidden="true" width="1000" height="1000">
+  </div>
+  <div class="horizon" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="reflzone" aria-hidden="true"></div>
+  <h1 class="word">KICK<em>S</em></h1>
+  <p class="mech">Launch a coin on any Kick streamer. Fees send Kicks on stream.</p>
+  <p class="venue">pump.fun · Kick · nothing to claim</p>
+</header>
+
+<main>
+
+<section class="sec rv" id="s1">
+  <div class="wrap">
+    <p class="eyebrow"><b>01</b><span>The rule</span></p>
+    <h2>One input. One channel. The alert on their stream is the receipt.</h2>
+    <div class="prose">
+      <p>Paste a Kick channel URL. That channel is what the coin is about. The coin's creator fee fills a pot for that channel, and whenever the channel is live and the pot covers a gift pack, Kicks are bought and sent on that stream. The gift alert fires on their screen, in front of their chat, with the coin's name on it.</p>
+    </div>
+    <div class="three">
+      <div><b>100%</b><span>of the creator fee, into Kicks</span></div>
+      <div><b>1</b><span>channel per coin</span></div>
+      <div><b>0</b><span>things the streamer does</span></div>
+    </div>
+    <div class="duo">
+    <div class="prose">
+      <p>The send rule is two facts, and both are checkable by anyone watching: the channel is live, and the pot covers a pack. Not a judgement somebody could argue with later. Live, and covered. If either is false, nothing is sent.</p>
+      <p>The streamer connects nothing, pastes nothing, signs nothing. There is no code for their bio, no login, no claim window. The Kicks land on their stream whether they have heard of the coin or not.</p>
+      <p class="q">One channel per coin was a decision, not a limitation. A coin that pays five streamers is a coin about nobody. A coin that pays one is about that one. If you want to pay a second streamer, launch a second coin.</p>
+    </div>
+    <aside class="spec"><p class="lbl">Send rule</p><b>IF</b>    channel.live = true
+<b>AND</b>   pot covers a pack
+<b>THEN</b>  buy the pack, press send
+      alert fires on stream
+<b>ELSE</b>  wait, visibly</aside>
+    </div>
+  </div>
+</section>
+
+<section class="sec rv tint" id="s2">
+  <div class="wrap">
+    <p class="eyebrow"><b>02</b><span>Launch</span> <span class="status" id="s2-status" hidden></span></p>
+    <h2>The launch control is a Kick channel URL. That is the whole form.</h2>
+    <div class="prose">
+      <p>Your coin is created on pump.fun like any other. KICKS adds one thing to it: the channel it pays, written into the coin's own description. There is no form here and no registry — the description line is the pairing key.</p>
+    </div>
+
+    <div class="eq" id="eq">
+      <div class="blk">
+        <p class="lbl">＋ Your coin</p>
+        <p>Name, ticker and image are set on pump.fun. The creator fee you choose there, capped at 3.00%, is what fills the pot.</p>
+      </div>
+      <div class="op" aria-hidden="true">+</div>
+      <div class="blk">
+        <label class="lbl" for="ch">Kick channel URL</label>
+        <input id="ch" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="kick.com/…" aria-describedby="ch-help">
+        <p id="ch-help" style="margin-top:8px">Paste the channel, press Enter. The reader checks it against Kick.</p>
+      </div>
+      <div class="op" aria-hidden="true">→</div>
+      <a class="go" id="go" href="https://pump.fun/create" target="_blank" rel="noopener noreferrer">Launch on pump.fun →</a>
+    </div>
+
+    <div id="chcard" class="card wait">
+      <div class="av" aria-hidden="true">K</div>
+      <div class="who">No channel yet. Paste one above and the card fills from Kick's own record: name, followers, and whether they are live right now.</div>
+    </div>
+
+    <div class="split">
+      <p class="lbl">Creator fee routing</p>
+      <div class="bar"><i id="split-lbl">100% → Kicks on the channel you paste</i></div>
+      <div class="legend"><span>0%</span><span>no protocol split · no treasury · no take netted out before the pot sees it</span><span>100%</span></div>
+    </div>
+
+    <div class="desc">
+      <p class="lbl">Description line — put this in the coin's description on pump.fun</p>
+      <div class="line">
+        <code id="descline" class="empty">Fees → kick.com/&lt;channel&gt; via KICKS</code>
+        <button class="cp" id="cpdesc" type="button" disabled>copy</button>
+      </div>
+      <p class="mono" style="margin-top:10px">This line is how a coin is paired with a channel. The coin's own description says which channel it pays — nothing on this site holds that pairing.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec rv" id="s3">
+  <div class="wrap">
+    <p class="eyebrow"><b>03</b><span>The pot</span></p>
+    <h2>The pot does not drip. It climbs, and it pays in steps.</h2>
+    <div class="prose">
+      <p>Kicks are sold in fixed packs. You cannot send an arbitrary amount; you send a pack, and the pack has a price Kick set. A pot fed by a creator fee grows a little on every trade. A rail that only accepts fixed packs cannot spend that way. So the pot climbs until it covers a rung, and then that rung is sent. When it has climbed high enough to cover a bigger pack, the bigger pack is sent instead. Each rung is an alert on the streamer's screen, and a bigger rung is a bigger alert.</p>
+      <p class="q">Below is a model of your own inputs, nothing more. No pot exists yet, so nothing here is measured. It ships empty.</p>
+    </div>
+
+    <div class="calc" id="calc">
+      <div class="blk">
+        <label class="lbl" for="fee">Creator fee</label>
+        <input id="fee" type="text" inputmode="decimal" autocomplete="off" placeholder="0.01 – 3.00">
+        <div class="unit">% of every trade · set at launch on pump.fun</div>
+      </div>
+      <div class="blk">
+        <label class="lbl" for="vol">Volume, one day</label>
+        <input id="vol" type="text" inputmode="decimal" autocomplete="off" placeholder="in dollars">
+        <div class="unit">$ traded in 24 hours · your guess, not ours</div>
+      </div>
+      <div class="blk">
+        <p class="lbl">Pot / day</p>
+        <div class="ro empty" id="p-day">—</div>
+      </div>
+      <div class="blk">
+        <p class="lbl">Pot / hour</p>
+        <div class="ro empty" id="p-hour">—</div>
+      </div>
+    </div>
+    <div class="err" id="calc-err" hidden></div>
+    <p class="packs">Packs: waiting on Kick's own prices — no ladder is shown until the first pack is bought.</p>
+    <div class="prose">
+      <p class="q">The rungs are Kick's prices, not ours. Publishing them earlier would mean printing a number nobody has paid, and the first time it differed from what Kick charged, the whole ladder would look invented. The same goes for Kick's share of every gift: it will appear once it is confirmed from Kick's own terms, with a link to the terms it came from.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec rv tint" id="s4">
+  <div class="wrap">
+    <p class="eyebrow"><b>04</b><span>The receipt</span></p>
+    <h2>The receipt is the alert on the streamer's own stream.</h2>
+    <div class="duo">
+    <div class="prose">
+      <p>Every pad in this family has to answer the same question: how do you know the money went where you said? Most answer by drawing something — a receipt card, a payout row, a dashboard they control. A receipt we drew is a receipt we could have drawn differently.</p>
+      <p>On KICKS the receipt is Kick's alert, on the streamer's screen, in their layout, in front of their chat, at a timestamp in their VOD. It cannot be forged from here, cannot be moved, and cannot be made to say a bigger number than was paid, because the number is Kick's, and Kick is the party being paid.</p>
+    </div>
+    <aside class="spec"><p class="lbl">Where to look</p><b>A</b>  the stream, as it fires
+<b>B</b>  the VOD, at its timestamp
+<b>C</b>  the public post, with the clip
+<b>—</b>  never a card of ours</aside>
+    </div>
+
+    <p class="lbl" style="margin-top:28px">The alert, rendered from your input</p>
+    <div class="alertwrap" id="alertwrap">
+      <div class="al-none" id="al-none">Resolve a channel in 02 and its alert is drawn here from your input.</div>
+      <div class="al" id="al" hidden>
+        <div class="av" id="al-av"></div>
+        <div class="t"><b id="al-name"></b><span>Kicks from $KICKS · on stream</span></div>
+      </div>
+    </div>
+    <div class="prose">
+      <p class="mono" style="margin-bottom:22px">No amount is drawn on it, ever. The amount belongs to the alert Kick fires, not to a card of ours.</p>
+      <h3>Verify</h3>
+      <p>Every send is posted publicly with a clip or a screenshot of that alert as it fired. Not a card of ours saying the alert fired. The alert. The ledger will be a list of those posts, each one linking the stream it paid. None exist yet, so no list is drawn here. If you want to know whether a pot paid, you go to the stream it was supposed to pay, and you look.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec rv" id="s5">
+  <div class="wrap">
+    <p class="eyebrow"><b>05</b><span>When it goes wrong</span></p>
+    <h2>Every failure has an answer decided in advance, not after somebody notices.</h2>
+    <table class="stack">
+      <thead><tr><th style="width:28%">Case</th><th>What happens</th><th style="width:32%">Where you see it</th></tr></thead>
+      <tbody>
+        <tr><td data-l="Case">The channel never goes live</td><td data-l="What happens">Its Kicks are never bought. The pot stays where it is. It is never re-routed to another channel, never swept into anything, never quietly zeroed.</td><td data-l="Where you see it" class="c">The pot, visible on the site, with its balance showing. A pot that waits is a pot you can see waiting.</td></tr>
+        <tr><td data-l="Case">The pot is smaller than the smallest pack</td><td data-l="What happens">It waits. There is no partial send, because Kick does not sell partial packs. The pot climbs until it covers a rung.</td><td data-l="Where you see it" class="c">The pot balance, and the first rung once Kick's prices are published.</td></tr>
+        <tr><td data-l="Case">The streamer turns gifts off, or bans the sending account</td><td data-l="What happens">Published. The pot is frozen, still visible, and the site says why it has not become an alert. An awkward line over a missing one.</td><td data-l="Where you see it" class="c">A line under that channel's pot naming the reason.</td></tr>
+        <tr><td data-l="Case">The human refuses to send</td><td data-l="What happens">The channel was live, the pack was covered, and no alert fired. The gap does not close by itself.</td><td data-l="Where you see it" class="c">A balance that never became an alert, publicly.</td></tr>
+        <tr><td data-l="Case">The human sends without being told</td><td data-l="What happens">The arithmetic stops adding up. The discrepancy is the signal.</td><td data-l="Where you see it" class="c">The sent total exceeds the fee total, publicly.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="sec rv tint" id="s6">
+  <div class="wrap">
+    <p class="eyebrow"><b>06</b><span>The operator</span></p>
+    <h2>Kick has no API for gifting. A human presses send.</h2>
+    <div class="duo">
+    <div class="prose">
+      <p>There is no endpoint a program can call to buy a pack and send it to a channel. Gifts are bought and sent by a person, in a Kick account, on a screen. So when a pot covers a pack and the channel is live, a human with a Kick account buys the pack and presses send. This is not described as automated, because it is not.</p>
+      <p>That human decides nothing. Which channel is fixed by the coin. When is fixed by whether the channel is live. How much is fixed by the pot and Kick's pack sizes. Their role is the one step the rail does not expose to software.</p>
+    </div>
+    <aside class="spec"><p class="lbl">Fixed before the human</p><b>WHICH</b>     the coin's description
+<b>WHEN</b>      channel.live = true
+<b>HOW MUCH</b>  the pot, in Kick's packs
+
+<p class="lbl" style="margin-top:14px">Left to the human</p>press send</aside>
+    </div>
+    <table class="stack">
+      <thead><tr><th style="width:44%">It cannot</th><th>So it</th></tr></thead>
+      <tbody>
+        <tr><td data-l="It cannot">change which channel a coin pays</td><td data-l="So it">pays the channel in the coin's description, or nothing</td></tr>
+        <tr><td data-l="It cannot">change the fee</td><td data-l="So it">watches the pot grow at whatever rate was set on pump.fun</td></tr>
+        <tr><td data-l="It cannot">decide when</td><td data-l="So it">sends only while the channel is live and the pot covers a pack</td></tr>
+        <tr><td data-l="It cannot">make the alert say a different number</td><td data-l="So it">sends Kick's pack, and Kick's alert prints Kick's number</td></tr>
+        <tr><td data-l="It cannot">hide a send</td><td data-l="So it">leaves an alert on someone else's stream, at a timestamp in their VOD</td></tr>
+        <tr><td data-l="It cannot">be stopped from refusing</td><td data-l="So it">leaves a balance that never became an alert, visible to anyone</td></tr>
+        <tr><td data-l="It cannot">be stopped from sending unasked</td><td data-l="So it">leaves a sent total larger than the fee total, visible to anyone</td></tr>
+      </tbody>
+    </table>
+    <div class="prose">
+      <p class="q">Narrowing this role is the main engineering work ahead. It will not be described as gone before it is gone. If Kick ever exposes gifting to software, the role goes away, and this page will say so on the day it does.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec rv" id="s7">
+  <div class="wrap">
+    <p class="eyebrow"><b>07</b><span>Readers</span></p>
+    <h2>Every number this site can show is read live from somewhere else. Try each reader.</h2>
+    <div class="prose">
+      <p class="q">These are the endpoints the page calls. Each button hits the real one and prints what came back and how long it took. A reader that cannot reach its source says so; it never prints a zero in place of an answer.</p>
+    </div>
+    <table class="stack readers" id="readers">
+      <thead><tr><th style="width:30%">Endpoint</th><th style="width:26%">Reads</th><th>Result</th><th></th></tr></thead>
+      <tbody>
+        <tr data-url="/api/kick?c=xqc"><td data-l="Endpoint" class="c">/api/kick?c=xqc</td><td data-l="Reads">A Kick channel: name, followers, live or not. Kick's own record.</td><td data-l="Result"><div class="r empty">—</div></td><td><button class="try" type="button">try</button></td></tr>
+        <tr data-url="/api/handle?h=Cented7"><td data-l="Endpoint" class="c">/api/handle?h=Cented7</td><td data-l="Reads">An X profile: name, followers, avatar.</td><td data-l="Result"><div class="r empty">—</div></td><td><button class="try" type="button">try</button></td></tr>
+        <tr data-url="/api/tweet?id=" data-input="tid"><td data-l="Endpoint" class="c">/api/tweet?id=<input id="tid" type="text" autocomplete="off" spellcheck="false" placeholder="a post id or URL" aria-label="X post id or URL"></td><td data-l="Reads">A post: views, likes, author. Paste any post id or its URL.</td><td data-l="Result"><div class="r empty">—</div></td><td><button class="try" type="button">try</button></td></tr>
+        <tr data-url="/api/coin?ca=" data-input="ca"><td data-l="Endpoint" class="c">/api/coin?ca=<input id="ca" type="text" autocomplete="off" spellcheck="false" placeholder="a Solana mint" aria-label="Solana mint address"></td><td data-l="Reads">A Solana mint's pair on Dexscreener: price, volume, liquidity. Nothing to read for $KICKS until a mint exists.</td><td data-l="Result"><div class="r empty">—</div></td><td><button class="try" type="button">try</button></td></tr>
+      </tbody>
+    </table>
+
+    <p class="lbl" style="margin-top:30px">Probes · measured on this page, right now</p>
+    <div class="probes" id="probes">
+      <div class="probe" data-url="/api/kick?c=xqc"><div class="n">kick</div><div class="v wait">probing</div></div>
+      <div class="probe" data-url="/api/handle?h=Cented7"><div class="n">handle</div><div class="v wait">probing</div></div>
+      <div class="probe" data-url="/api/tweet?id=20"><div class="n">tweet</div><div class="v wait">probing</div></div>
+      <div class="probe" data-url="/api/avatar?h=Cented7"><div class="n">avatar</div><div class="v wait">probing</div></div>
+      <div class="probe" data-url="/api/coin?ca=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"><div class="n">coin</div><div class="v wait">probing</div></div>
+    </div>
+    <p class="mono">Latency of each reader from your browser to this site and back. The only live figures on this page before launch are the ones measured here.</p>
+  </div>
+</section>
+
+<section class="sec rv tint" id="s8">
+  <div class="wrap">
+    <p class="eyebrow"><b>08</b><span>Status</span></p>
+    <h2>What is not verifiable today.</h2>
+    <div class="prose">
+      <p class="q">Listed here rather than left for you to find. What is checkable right now is the rule, written down, and the docs.</p>
+    </div>
+    <ul class="nots">
+      <li><b>mint</b><i>There is no mint address. When one exists it will appear on this page and in the pinned post at the same moment. Anyone posting one before that is scamming you.</i></li>
+      <li><b>pot</b><i>No pot has ever bought a Kick. Where a number would go there is a dash, and a dash is not a zero. A zero would claim something was measured and found empty.</i></li>
+      <li><b>ledger</b><i>There is no ledger of sends, so there is no ledger on this site. It will be a list of public posts, each with the clip of the alert it refers to.</i></li>
+      <li><b>ladder</b><i>The rung sizes are not published, on purpose. They will be taken from Kick's own prices at the moment the first pack is bought, and not before.</i></li>
+      <li><b>share</b><i>Kick's share of every gift is not published, on purpose. It will appear when confirmed from Kick's own terms, with a link to the terms.</i></li>
+      <li><b>consent</b><i>No streamer has consented to any of this. Coins are launched on channels, not with them.</i></li>
+    </ul>
+    <div class="carow" id="carow" hidden>
+      <span class="lbl" style="margin:0">Official token $KICKS</span>
+      <code id="ca-out"></code>
+      <button class="cp" id="cpca" type="button">copy</button>
+    </div>
+    <div class="prose">
+      <p>The bar at the top of this page is the only place a mint address will ever be announced by this site. Until it changes, there is no token.</p>
+    </div>
+    <p class="legal" id="legal">Not affiliated with Kick. Streamers are not endorsed by, and have not endorsed, any coin launched on them.</p>
+  </div>
+</section>
+
+</main>
+
+<script>
+const CONFIG = { ca: '', x: '', launchpad: 'https://pump.fun/create' };
+
+/* ── helpers ─────────────────────────────────────────── */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const say = (t) => { const l = $('#live'); if (l) l.textContent = t; };
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const nf = new Intl.NumberFormat('en-US');
+const money = (n) => '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+async function copy(text, btn) {
+  try { await navigator.clipboard.writeText(text); btn.textContent = 'copied'; }
+  catch { btn.textContent = 'select + copy'; }
+  setTimeout(() => { btn.textContent = 'copy'; }, 1600);
+}
+
+/* ── top bar: scam strip in both states ──────────────── */
+(function strip() {
+  const s = $('#strip');
+  if (CONFIG.ca) {
+    s.innerHTML = '<b>OFFICIAL TOKEN $KICKS</b> <code>' + esc(CONFIG.ca) + '</code><button type="button" id="cpstrip">copy</button> — anything else is not ours';
+    $('#cpstrip').addEventListener('click', (e) => copy(CONFIG.ca, e.currentTarget));
+    const row = $('#carow'); row.hidden = false; $('#ca-out').textContent = CONFIG.ca;
+    $('#cpca').addEventListener('click', (e) => copy(CONFIG.ca, e.currentTarget));
+  } else {
+    s.innerHTML = '<b>$KICKS has no mint address yet.</b> When it exists it will be here and in the pinned post at the same moment. Anyone posting an address before that is scamming you.';
+  }
+  $('#go').href = CONFIG.launchpad;
+  const top = $('#top');
+  const fit = () => document.documentElement.style.setProperty('--toph', top.offsetHeight + 'px');
+  fit();
+  if ('ResizeObserver' in window) new ResizeObserver(fit).observe(top);
+  window.addEventListener('resize', fit);
+})();
+
+/* ── nav scroll-spy: exactly one active item ─────────── */
+(function spy() {
+  const links = $$('.nav a').filter((a) => a.getAttribute('href').startsWith('#'));
+  const secs = links.map((a) => $(a.getAttribute('href'))).filter(Boolean);
+  const mark = (id) => links.forEach((a) => a.classList.toggle('on', a.getAttribute('href') === '#' + id));
+  const pick = () => {
+    const line = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--toph')) || 90) + 40;
+    let cur = null;
+    for (const s of secs) if (s.getBoundingClientRect().top <= line) cur = s;
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) cur = secs[secs.length - 1];
+    mark(cur ? cur.id : '');
+  };
+  if ('IntersectionObserver' in window) new IntersectionObserver(pick, { rootMargin: '-40% 0px -50% 0px' }).observe(document.body);
+  ['scroll', 'resize', 'hashchange', 'load'].forEach((e) => window.addEventListener(e, pick, { passive: true }));
+  pick();
+})();
+
+/* ── reveal, with a sweep so anchor jumps never leave a section hidden ─ */
+(function reveal() {
+  const els = $$('.rv');
+  const sweep = () => els.forEach((e) => { if (e.getBoundingClientRect().top < window.innerHeight * 0.92) e.classList.add('vis'); });
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((en) => en.forEach((x) => { if (x.isIntersecting) { x.target.classList.add('vis'); io.unobserve(x.target); } }), { rootMargin: '0px 0px -8% 0px' });
+    els.forEach((e) => io.observe(e));
+  } else els.forEach((e) => e.classList.add('vis'));
+  ['scroll', 'hashchange', 'load', 'resize'].forEach((e) => window.addEventListener(e, sweep, { passive: true }));
+  sweep(); setTimeout(sweep, 300);
+})();
+
+/* ── the stage: three flickering beams + a rising field of specks ─ */
+(function stage() {
+  const cv = $('#stage'); if (!cv) return;
+  const cx = cv.getContext('2d', { alpha: true });
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W = 0, H = 0, specks = [], raf = 0, last = 0, paused = false, frame = 0;
+  const beams = [
+    { x: 0.16, w: 0.30, lvl: 1, hold: 0 },
+    { x: 0.50, w: 0.26, lvl: 1, hold: 0 },
+    { x: 0.84, w: 0.30, lvl: 1, hold: 0 },
+  ];
+  const LVL = [0.5, 0.62, 0.74, 0.86, 1, 1, 1];
+  const rnd = Math.random;
+  function mk(fresh) {
+    return { x: rnd() * W, y: fresh ? H + rnd() * 40 : rnd() * H,
+      vy: 0.35 + rnd() * 1.1, len: 4 + rnd() * 16, b: 0.25 + rnd() * 0.75, r: rnd() < 0.15 ? 2 : 1, sway: (rnd() - 0.5) * 0.25 };
+  }
+  function size() {
+    W = cv.width = innerWidth; H = cv.height = innerHeight;
+    const n = Math.max(70, Math.min(240, Math.round(W * H / 7000)));
+    specks = Array.from({ length: n }, () => mk(false));
+  }
+  function inBeam(x, y) {
+    const fy = H * 0.66; if (y > fy) return 0;
+    for (const b of beams) {
+      const t = (y + H * 0.05) / (fy + H * 0.05);
+      const hw = 8 + (b.w * W / 2 - 8) * t;
+      const d = Math.abs(x - b.x * W);
+      if (d < hw) return (1 - d / hw) * b.lvl;
+    }
+    return 0;
+  }
+  function beam(b, I) {
+    const ax = b.x * W, ay = -H * 0.05, fy = H * 0.66, hw = b.w * W / 2;
+    for (const [k, a] of [[1, 0.13], [0.55, 0.16], [0.22, 0.22]]) {
+      const g = cx.createLinearGradient(0, ay, 0, fy);
+      g.addColorStop(0, 'rgba(83,252,24,' + (a * I).toFixed(3) + ')');
+      g.addColorStop(0.65, 'rgba(83,252,24,' + (a * I * 0.35).toFixed(3) + ')');
+      g.addColorStop(1, 'rgba(83,252,24,0)');
+      cx.fillStyle = g; cx.beginPath();
+      cx.moveTo(ax - 8 * k, ay); cx.lineTo(ax + 8 * k, ay); cx.lineTo(ax + hw * k, fy); cx.lineTo(ax - hw * k, fy); cx.closePath(); cx.fill();
+    }
+  }
+  function draw() {
+    frame++;
+    cx.clearRect(0, 0, W, H);
+    const dimS = Math.max(0.16, 1 - scrollY / (H * 1.15));
+    cx.globalCompositeOperation = 'lighter';
+    for (const b of beams) {
+      if (--b.hold <= 0) { b.lvl = LVL[(rnd() * LVL.length) | 0]; b.hold = 3 + (rnd() * 16) | 0; }
+      beam(b, b.lvl * dimS);
+    }
+    for (const s of specks) {
+      s.y -= s.vy; s.x += s.sway;
+      if (s.y < -20 || s.x < -4 || s.x > W + 4) Object.assign(s, mk(true));
+      if (rnd() < 0.05) s.b = 0.25 + rnd() * 0.75;   /* churn: re-rolled brightness */
+      const lit = inBeam(s.x, s.y);
+      const a = Math.min(1, s.b * (0.35 + lit * 1.2) * (0.45 + dimS * 0.55));
+      const g = cx.createLinearGradient(0, s.y, 0, s.y + s.len);
+      g.addColorStop(0, 'rgba(83,252,24,' + (a * 0.6).toFixed(3) + ')');
+      g.addColorStop(1, 'rgba(83,252,24,0)');
+      cx.fillStyle = g; cx.fillRect(s.x, s.y, s.r, s.len);
+      cx.fillStyle = lit > 0.5 ? 'rgba(220,255,200,' + a.toFixed(3) + ')' : 'rgba(83,252,24,' + a.toFixed(3) + ')';
+      cx.fillRect(s.x, s.y, s.r, s.r);                        /* bright head */
+    }
+    cx.globalCompositeOperation = 'source-over';
+  }
+  function loop(t) {
+    raf = requestAnimationFrame(loop);
+    if (paused) return;
+    if (t - last < 41) return;   /* ~24fps */
+    last = t; draw();
+  }
+  size(); addEventListener('resize', size);
+  if (reduce) { draw(); return; }
+  document.addEventListener('visibilitychange', () => { paused = document.hidden; });
+  raf = requestAnimationFrame(loop);
+  window.__stage = { get frame() { return frame; } };
+})();
+
+/* ── 02: the channel reader ──────────────────────────── */
+const CH = { slug: null, data: null };
+function slugOf(input = '') {
+  const s = String(input).trim().toLowerCase();
+  const m = s.match(/kick\.com\/([a-z0-9_-]{1,25})/) || s.match(/^@?([a-z0-9_-]{1,25})$/);
+  return m ? m[1] : null;
+}
+function avatarNode(url, letter, cls) {
+  const av = document.createElement('div'); av.className = 'av'; av.textContent = letter;
+  if (url) {
+    const im = new Image(); im.alt = ''; im.referrerPolicy = 'no-referrer';
+    im.onload = () => { av.textContent = ''; av.appendChild(im); im.classList.add('ok'); if (cls === 'al') im.style.opacity = 1; };
+    im.onerror = () => { im.remove(); };
+    im.src = url;
+  }
+  return av;
+}
+function renderChannel(slug, d) {
+  const card = $('#chcard'); card.className = 'card'; card.innerHTML = '';
+  const st = $('#s2-status');
+  if (d && d.ok) {
+    card.appendChild(avatarNode(d.avatar, (d.name || slug)[0].toUpperCase(), 'card'));
+    const who = document.createElement('div'); who.className = 'who';
+    who.innerHTML = '<div class="nm">' + esc(d.name || slug) + '</div>' +
+      '<div class="sl"><a href="https://kick.com/' + esc(d.slug || slug) + '" target="_blank" rel="noopener noreferrer">kick.com/' + esc(d.slug || slug) + '</a></div>' +
+      '<div class="fw">' + (typeof d.followers === 'number' ? nf.format(d.followers) + ' followers' : 'followers — not in the record') + (d.live && d.title ? ' · ' + esc(d.title) : '') + '</div>';
+    card.appendChild(who);
+    const chip = document.createElement('span'); chip.className = 'chip' + (d.live ? ' live' : ''); chip.textContent = d.live ? 'LIVE' : 'offline';
+    card.appendChild(chip);
+    st.hidden = false; st.className = 'status k'; st.textContent = d.live ? 'live now' : 'resolved';
+    say('Channel ' + (d.name || slug) + ' resolved, ' + (d.live ? 'live' : 'offline'));
+  } else {
+    card.classList.add('fail');
+    const av = document.createElement('div'); av.className = 'av'; av.textContent = '!'; card.appendChild(av);
+    const who = document.createElement('div'); who.className = 'who';
+    const reason = d ? d.reason : 'reader unreachable';
+    who.innerHTML = esc(reason) + (d && d.status ? ' (HTTP ' + esc(d.status) + ')' : '') +
+      '<small>' + (reason === 'no such channel'
+        ? 'Kick has no channel at kick.com/' + esc(slug) + '. Check the spelling.'
+        : 'The channel may well exist; the reader could not see it. The description line below still pairs kick.com/' + esc(slug) + ' — the pairing lives in the coin, not here.') + '</small>';
+    card.appendChild(who);
+    st.hidden = false; st.className = 'status'; st.textContent = 'unread';
+    say('Channel read failed: ' + reason);
+  }
+  renderAlert();
+}
+function renderAlert() {
+  const d = CH.data, al = $('#al'), none = $('#al-none');
+  if (d && d.ok) {
+    const av = $('#al-av'); av.replaceWith(avatarNode(d.avatar, (d.name || CH.slug)[0].toUpperCase(), 'al'));
+    $('.al .av').id = 'al-av';
+    $('#al-name').textContent = d.name || CH.slug;
+    al.hidden = false; none.hidden = true;
+  } else { al.hidden = true; none.hidden = false; }
+}
+function setPairing(slug) {
+  const dl = $('#descline'), sb = $('#split-lbl'), cp = $('#cpdesc');
+  if (slug) {
+    dl.textContent = 'Fees → kick.com/' + slug + ' via KICKS'; dl.classList.remove('empty');
+    sb.textContent = '100% → Kicks on ' + slug; cp.disabled = false;
+  } else {
+    dl.textContent = 'Fees → kick.com/<channel> via KICKS'; dl.classList.add('empty');
+    sb.textContent = '100% → Kicks on the channel you paste'; cp.disabled = true;
+  }
+}
+async function resolveChannel() {
+  const raw = $('#ch').value, slug = slugOf(raw);
+  const st = $('#s2-status');
+  if (!raw.trim()) { CH.slug = null; CH.data = null; setPairing(null); st.hidden = true;
+    const c = $('#chcard'); c.className = 'card wait'; c.innerHTML = '<div class="av" aria-hidden="true">K</div><div class="who">No channel yet. Paste one above and the card fills from Kick\'s own record: name, followers, and whether they are live right now.</div>';
+    renderAlert(); return; }
+  if (!slug) { CH.slug = null; CH.data = null; setPairing(null); renderChannel(raw, { ok: false, reason: 'that is not a Kick channel URL' }); return; }
+  if (slug === CH.slug && CH.data) return;
+  CH.slug = slug; CH.data = null; setPairing(slug);
+  st.hidden = false; st.className = 'status'; st.textContent = 'reading…';
+  const c = $('#chcard'); c.className = 'card wait'; c.innerHTML = '<div class="av">K</div><div class="who">Reading kick.com/' + esc(slug) + '…</div>';
+  let d = null;
+  try { const r = await fetch('/api/kick?c=' + encodeURIComponent(slug)); d = await r.json(); } catch { d = null; }
+  if (CH.slug !== slug) return;
+  CH.data = d;
+  renderChannel(slug, d);
+}
+$('#ch').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); resolveChannel(); } });
+$('#ch').addEventListener('blur', resolveChannel);
+$('#ch').addEventListener('input', () => { const s = slugOf($('#ch').value); if (s !== CH.slug) { CH.data = null; setPairing(s); renderAlert(); } });
+$('#cpdesc').addEventListener('click', (e) => copy($('#descline').textContent, e.currentTarget));
+
+/* ── 03: the pot model — ships empty, exact currency ─── */
+(function calc() {
+  const fee = $('#fee'), vol = $('#vol'), day = $('#p-day'), hour = $('#p-hour'), err = $('#calc-err');
+  const num = (s) => { const t = String(s).replace(/[$,\s]/g, ''); return t === '' ? null : (/^\d*\.?\d*$/.test(t) ? Number(t) : NaN); };
+  function out(a, b) { day.textContent = a; hour.textContent = b; day.classList.toggle('empty', a === '—'); hour.classList.toggle('empty', b === '—'); }
+  function run() {
+    const f = num(fee.value), v = num(vol.value);
+    err.hidden = true; err.textContent = '';
+    if (f === null && v === null) return out('—', '—');
+    if (Number.isNaN(f) || Number.isNaN(v)) { err.hidden = false; err.textContent = 'Numbers only.'; return out('—', '—'); }
+    if (f !== null && (f < 0.01 || f > 3)) {
+      err.hidden = false; err.textContent = 'pump.fun caps the creator fee at 3.00% — enter a fee from 0.01 to 3.00.';
+      return out('—', '—');
+    }
+    if (f === null || v === null) return out('—', '—');
+    const perDay = Math.round(v * f) / 100;          /* cents, exact */
+    out(money(perDay) + ' / day', money(perDay / 24) + ' / hour');
+  }
+  [fee, vol].forEach((i) => i.addEventListener('input', run));
+  run();
+})();
+
+/* ── 07: readers + probes — the only live figures on the page ─ */
+function summary(url, j, status) {
+  if (!j || typeof j !== 'object') return 'HTTP ' + status + ' · no JSON';
+  if (j.error) return 'HTTP ' + status + ' · ' + j.error;
+  if (url.startsWith('/api/kick')) return j.ok ? (j.name + ' · ' + (typeof j.followers === 'number' ? nf.format(j.followers) + ' followers' : 'followers —') + ' · ' + (j.live ? 'LIVE' : 'offline') + ' · ' + j.src) : (j.reason + (j.status ? ' (HTTP ' + j.status + ')' : ''));
+  if (url.startsWith('/api/handle')) return j.exists ? ('@' + j.handle + (j.name ? ' · ' + j.name : '') + (typeof j.followers === 'number' ? ' · ' + nf.format(j.followers) + ' followers' : ' · followers —') + ' · ' + j.src) : 'not found · ' + j.src;
+  if (url.startsWith('/api/tweet')) return j.exists ? ('@' + j.handle + ' · views ' + (typeof j.views === 'number' ? nf.format(j.views) : '—') + ' · ' + j.src) : 'not found · ' + j.src;
+  if (url.startsWith('/api/coin')) return j.hasPair ? ((j.symbol || j.ca) + ' · price ' + (j.price != null ? '$' + j.price : '—') + ' · vol24 ' + (j.volume24 != null ? money(j.volume24) : '—')) : 'no pair on Dexscreener for that mint';
+  return JSON.stringify(j).slice(0, 120);
+}
+async function hit(url) {
+  const t0 = performance.now();
+  try {
+    const r = await fetch(url, { cache: 'no-store' });
+    const ms = Math.round(performance.now() - t0);
+    const ct = r.headers.get('content-type') || '';
+    let j = null; if (ct.includes('json')) { try { j = await r.json(); } catch {} }
+    return { ok: true, status: r.status, ms, j, ct };
+  } catch { return { ok: false, status: 0, ms: Math.round(performance.now() - t0), j: null }; }
+}
+$$('#readers tr[data-url]').forEach((tr) => {
+  const btn = $('.try', tr), res = $('.r', tr);
+  btn.addEventListener('click', async () => {
+    let url = tr.dataset.url;
+    if (tr.dataset.input) { const v = $('#' + tr.dataset.input).value.trim(); if (!v) { res.className = 'r'; res.textContent = tr.dataset.input === 'tid' ? 'enter a post id first' : 'enter a mint first'; return; } url += encodeURIComponent(v); }
+    btn.disabled = true; res.className = 'r'; res.textContent = 'GET ' + url + ' …';
+    const x = await hit(url);
+    res.innerHTML = x.ok ? '→ ' + esc(summary(url, x.j, x.status)) + ' · <span class="ms">' + x.ms + ' ms</span>' : '<span class="no">reader unreachable</span> · ' + x.ms + ' ms';
+    btn.disabled = false;
+  });
+});
+$$('#probes .probe').forEach(async (p) => {
+  const v = $('.v', p);
+  const x = await hit(p.dataset.url);
+  v.className = 'v' + (x.ok && x.status < 300 ? '' : ' bad');
+  v.textContent = x.ok ? x.ms + ' ms · ' + x.status : 'unreachable';
+});
+</script>
+</body>
+</html>
